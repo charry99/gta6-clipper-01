@@ -9,7 +9,7 @@
 // Local run, the same way the grader runs it:
 //   mkdir -p out && MAKEFUN_BOT_DIR=. MAKEFUN_OUTPUT_DIR=out node main.ts
 
-import { copyFileSync, mkdirSync, readFileSync } from 'node:fs';
+import { copyFileSync, mkdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 const botDir = process.env.MAKEFUN_BOT_DIR ?? '/bot';
@@ -36,3 +36,12 @@ if (typeof url !== 'string' || url.length === 0) {
 
 mkdirSync(outputDir, { recursive: true });
 copyFileSync(sourcePath, targetPath);
+
+// Verify the copy landed whole: the gate reads exactly these bytes, so a
+// short copy must fail here rather than as a puzzling invalid entry later.
+const copied = statSync(targetPath).size;
+const expected = statSync(sourcePath).size;
+if (copied !== expected) {
+  console.error(`copy of VIDEO.json is incomplete: ${copied} of ${expected} bytes at ${targetPath}`);
+  process.exit(1);
+}
